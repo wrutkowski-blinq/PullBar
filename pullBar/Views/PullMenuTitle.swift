@@ -26,6 +26,7 @@ enum CheckState {
 /// Builds the attributed titles for pull request rows and category headers in the status bar menu.
 enum PullMenuTitle {
 
+    static let titleLength = 80
     static let titleFont = NSFont.systemFont(ofSize: 13, weight: .semibold)
     static let detailFont = NSFont.systemFont(ofSize: 11)
 
@@ -44,7 +45,7 @@ enum PullMenuTitle {
             title.appendString(string: "● ", color: .systemBlue, font: detailFont)
         }
         title
-            .appendString(string: node.title.trunc(length: 50), color: node.isDraft ? .secondaryLabelColor : .labelColor, font: titleFont)
+            .appendString(string: node.title.trunc(length: titleLength), color: node.isDraft ? .secondaryLabelColor : .labelColor, font: titleFont)
             .appendString(string: "  #\(node.number)", color: .secondaryLabelColor, font: digitsFont)
         if node.isDraft {
             title

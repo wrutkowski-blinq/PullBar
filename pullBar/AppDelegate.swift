@@ -310,7 +310,7 @@ extension AppDelegate {
         let checks = addChecksSubmenu(pull: pull, to: issueItem)
 
         issueItem.attributedTitle = PullMenuTitle.title(for: pull, checks: checks, showLabels: Defaults[.showLabels])
-        if pull.node.title.count > 50 {
+        if pull.node.title.count > PullMenuTitle.titleLength {
             issueItem.toolTip = pull.node.title
         }
         issueItem.representedObject = pull.node.url
