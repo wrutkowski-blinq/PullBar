@@ -177,9 +177,11 @@ extension AppDelegate {
             for (index, category) in visibleCategories.enumerated() {
                 let pulls = pullsByCategory[category.id] ?? []
                 let headerTitle = "\(category.displayName) (\(pulls.count))"
+                let header = NSMenuItem(title: headerTitle, action: nil, keyEquivalent: "")
+                header.attributedTitle = PullMenuTitle.sectionHeader(name: category.displayName, count: pulls.count)
 
                 if category.asSubmenu {
-                    let parent = NSMenuItem(title: headerTitle, action: nil, keyEquivalent: "")
+                    let parent = header
                     let submenu = NSMenu()
                     for pull in pulls {
                         self.addMenuItems(pull: pull, to: submenu)
@@ -187,7 +189,7 @@ extension AppDelegate {
                     parent.submenu = submenu
                     self.menu.addItem(parent)
                 } else {
-                    self.menu.addItem(NSMenuItem(title: headerTitle, action: nil, keyEquivalent: ""))
+                    self.menu.addItem(header)
                     for pull in pulls {
                         self.addMenuItems(pull: pull, to: self.menu)
                     }
@@ -219,9 +221,8 @@ extension AppDelegate {
         let copyTitle = NSMutableAttributedString(attributedString: issueItem.attributedTitle ?? NSAttributedString(string: issueItem.title))
         let firstLineEnd = (copyTitle.string as NSString).range(of: "\n").location
         let firstLine = NSMutableAttributedString(string: "")
-            .appendString(string: "Copy Link", color: NSColor(.primary))
-            .appendString(string: " #" + String(pull.node.number))
-            .appendSeparator()
+            .appendString(string: "Copy Link", color: .labelColor, font: PullMenuTitle.titleFont)
+            .appendString(string: "  #" + String(pull.node.number), color: .secondaryLabelColor, font: PullMenuTitle.detailFont)
         copyTitle.replaceCharacters(in: NSRange(location: 0, length: firstLineEnd == NSNotFound ? copyTitle.length : firstLineEnd), with: firstLine)
 
         let copyItem = NSMenuItem(title: "", action: #selector(copyLink), keyEquivalent: "")
@@ -249,7 +250,7 @@ extension AppDelegate {
                 guard let loadedImage = loadedImage else { return }
 
                 loadedImage.cacheMode = NSImage.CacheMode.always
-                let resizedImage = self.resizeImage(image: loadedImage, size: NSSize(width: 36.0, height: 36.0))
+                let resizedImage = self.circularImage(image: loadedImage, diameter: 36.0)
                 items.forEach { $0.image = resizedImage }
             }
         }
@@ -257,62 +258,27 @@ extension AppDelegate {
     
     func createMenuItem(pull: Edge) -> NSMenuItem {
         let issueItem = NSMenuItem(title: "", action: #selector(self.openLink), keyEquivalent: "")
-        
-        let issueItemTitle = NSMutableAttributedString(string: "")
-            .appendString(string: pull.node.isReadByViewer ? "" : "⏺ ", color: .systemBlue)
-        
-        if (pull.node.isDraft) {
-            issueItemTitle
-                .appendIcon(iconName: "git-draft-pull-request", color: NSColor.secondaryLabelColor)
+        let checks = addChecksSubmenu(pull: pull, to: issueItem)
+
+        issueItem.attributedTitle = PullMenuTitle.title(for: pull, checks: checks, showLabels: Defaults[.showLabels])
+        if pull.node.title.count > 50 {
+            issueItem.toolTip = pull.node.title
         }
-        
-        issueItemTitle
-            .appendString(string: pull.node.title.trunc(length: 50), color: NSColor(.primary))
-            .appendString(string: " #" +  String(pull.node.number))
-            .appendSeparator()
-        
-        issueItemTitle.appendNewLine()
-        
-        issueItemTitle
-            .appendIcon(iconName: "repo")
-            .appendString(string: pull.node.repository.name)
-            .appendSeparator()
-            .appendIcon(iconName: "person")
-            .appendString(string: pull.node.author?.login ?? User.ghost.login)
-        
-        if !pull.node.labels.nodes.isEmpty && Defaults[.showLabels] {
-            issueItemTitle
-                .appendNewLine()
-                .appendIcon(iconName: "tag", color: NSColor(.secondary))
-            for label in pull.node.labels.nodes {
-                issueItemTitle
-                    .appendString(string: label.name, color: hexColor(hex: label.color), fontSize: NSFont.smallSystemFontSize)
-                    .appendSeparator()
-            }
-        }
-        
-        issueItemTitle.appendNewLine()
-        
-        let approvedByMe = pull.node.reviews.edges.contains{ $0.node.viewerDidAuthor }
-        issueItemTitle
-            .appendIcon(iconName: "check-circle", color: approvedByMe ? NSColor(named: "green")! : NSColor.secondaryLabelColor)
-            .appendString(string: " " + String(pull.node.reviews.totalCount))
-            .appendSeparator()
-            .appendString(string: "+" + String(pull.node.additions ?? 0), color: NSColor(named: "green")!)
-            .appendString(string: " -" + String(pull.node.deletions ?? 0), color: NSColor(named: "red")!)
-            .appendSeparator()
-            .appendIcon(iconName: "calendar")
-            .appendString(string: pull.node.createdAt.getElapsedInterval())
-        
+        issueItem.representedObject = pull.node.url
+
+        return issueItem
+    }
+
+    /// Adds a submenu listing the pull request's checks, and returns their states for the row's summary pill.
+    func addChecksSubmenu(pull: Edge, to issueItem: NSMenuItem) -> [CheckState] {
+        var checks: [CheckState] = []
+
         if let commits = pull.node.commits {
-            
+
             if let checkSuites = commits.nodes[0].commit.checkSuites {
-                
+
                 if checkSuites.nodes.count > 0 {
                     issueItem.submenu = NSMenu()
-                    issueItemTitle
-                        .appendSeparator()
-                        .appendIcon(iconName: "checklist", color: NSColor.secondaryLabelColor)
                 }
                 for checkSuite in checkSuites.nodes {
                     
@@ -326,17 +292,14 @@ extension AppDelegate {
                         buildItem.toolTip = check.conclusion
                         if check.conclusion  == "SUCCESS" {
                             buildItem.image = NSImage(named: "check-circle-fill")!.tint(color: NSColor(named: "green")!)
-                            issueItemTitle.appendIcon(iconName: "dot-fill", color: NSColor(named: "green")!)
                         } else if check.conclusion  == "FAILURE" {
                             buildItem.image = NSImage(named: "x-circle-fill")!.tint(color: NSColor(named: "red")!)
-                            issueItemTitle.appendIcon(iconName: "dot-fill", color: NSColor(named: "red")!)
                         } else if check.conclusion  == "ACTION_REQUIRED" {
                             buildItem.image = NSImage(named: "issue-draft")!.tint(color: NSColor(named: "yellow")!)
-                            issueItemTitle.appendIcon(iconName: "dot-fill", color: NSColor(named: "yellow")!)
                         } else {
                             buildItem.image = NSImage(named: "question")!.tint(color: NSColor.gray)
-                            issueItemTitle.appendIcon(iconName: "dot-fill", color: NSColor.gray)
                         }
+                        checks.append(CheckState(conclusion: check.conclusion))
                         
                         issueItem.submenu?.addItem(buildItem)
                     }
@@ -347,9 +310,6 @@ extension AppDelegate {
                 
                 if statusCheckRollup.contexts.nodes.count > 0 {
                     issueItem.submenu = NSMenu()
-                    issueItemTitle
-                        .appendSeparator()
-                        .appendIcon(iconName: "checklist", color: NSColor.secondaryLabelColor)
                 }
                 
                 for check in statusCheckRollup.contexts.nodes {
@@ -369,30 +329,21 @@ extension AppDelegate {
                     switch status {
                     case "SUCCESS":
                         buildItem.image = NSImage(named: "check-circle-fill")!.tint(color: NSColor(named: "green")!)
-                        issueItemTitle.appendIcon(iconName: "dot-fill", color: NSColor(named: "green")!)
                     case "FAILURE":
                         buildItem.image = NSImage(named: "x-circle-fill")!.tint(color: NSColor(named: "red")!)
-                        issueItemTitle.appendIcon(iconName: "dot-fill", color: NSColor(named: "red")!)
                     case "PENDING":
                         buildItem.image = NSImage(named: "issue-draft")!.tint(color: NSColor(named: "yellow")!)
-                        issueItemTitle.appendIcon(iconName: "dot-fill", color: NSColor(named: "yellow")!)
                     default:
                         buildItem.image = NSImage(named: "question")!.tint(color: NSColor.gray)
-                        issueItemTitle.appendIcon(iconName: "dot-fill", color: NSColor.gray)
-                        
+
                     }
+                    checks.append(CheckState(conclusion: status))
                     issueItem.submenu?.addItem(buildItem)
                 }
             }
         }
-        
-        issueItem.attributedTitle = issueItemTitle
-        if pull.node.title.count > 50 {
-            issueItem.toolTip = pull.node.title
-        }
-        issueItem.representedObject = pull.node.url
-        
-        return issueItem
+
+        return checks
     }
     
     func addMenuFooterItems() {
@@ -535,5 +486,13 @@ extension AppDelegate {
                   fraction: 1.0)
         newImage.unlockFocus()
         return newImage
+    }
+
+    func circularImage(image: NSImage, diameter: CGFloat) -> NSImage {
+        NSImage(size: NSSize(width: diameter, height: diameter), flipped: false) { rect in
+            NSBezierPath(ovalIn: rect).addClip()
+            image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1.0)
+            return true
+        }
     }
 }

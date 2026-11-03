@@ -11,22 +11,20 @@ extension Date {
     
     func getElapsedInterval() -> String {
         
-        let interval = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: self, to: Date())
-        
+        let interval = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: self, to: Date())
+
         if let year = interval.year, year > 0 {
-            return "\(year) year\(year == 1 ? "" : "s") ago"
+            return "\(year)y"
         } else if let month = interval.month, month > 0 {
-            return "\(month) month\(month == 1 ? "" : "s") ago"
+            return "\(month)mo"
         } else if let day = interval.day, day > 0 {
-            return "\(day) day\(day == 1 ? "" : "s") ago"
+            return "\(day)d"
         } else if let hour = interval.hour, hour > 0 {
-            return "\(hour) hour\(hour == 1 ? "" : "s") ago"
+            return "\(hour)h"
         } else if let minute = interval.minute, minute > 0 {
-            return "\(minute) minute\(minute == 1 ? "" : "s") ago"
-        } else if let second = interval.second, second > 0 {
-            return "\(second) second\(second == 1 ? "" : "s") ago"
+            return "\(minute)m"
         } else {
-            return "a moment ago"
+            return "now"
         }
         
     }

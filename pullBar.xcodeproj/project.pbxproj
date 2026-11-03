@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		76181DD52D7CC83000D4D7CB /* AppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76181DD42D7CC83000D4D7CB /* AppView.swift */; };
+		9A1E0C0A2E00000000000004 /* PullMenuTitle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E0C0A2E00000000000003 /* PullMenuTitle.swift */; };
 		76181DD72D7CC84800D4D7CB /* AppPromotionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76181DD62D7CC84800D4D7CB /* AppPromotionView.swift */; };
 		761B97072D7CCDA70000378A /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 761B97062D7CCDA70000378A /* LaunchAtLogin */; };
 		768A4C5528AF253C004E557E /* BottomItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768A4C5428AF253C004E557E /* BottomItemView.swift */; };
@@ -34,6 +35,7 @@
 
 /* Begin PBXFileReference section */
 		76181DD42D7CC83000D4D7CB /* AppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppView.swift; sourceTree = "<group>"; };
+		9A1E0C0A2E00000000000003 /* PullMenuTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PullMenuTitle.swift; sourceTree = "<group>"; };
 		76181DD62D7CC84800D4D7CB /* AppPromotionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPromotionView.swift; sourceTree = "<group>"; };
 		768A4C5428AF253C004E557E /* BottomItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomItemView.swift; sourceTree = "<group>"; };
 		769F4E1A2765A2B900594911 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 				768A4C5428AF253C004E557E /* BottomItemView.swift */,
 				76181DD42D7CC83000D4D7CB /* AppView.swift */,
 				76181DD62D7CC84800D4D7CB /* AppPromotionView.swift */,
+				9A1E0C0A2E00000000000003 /* PullMenuTitle.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -240,6 +243,7 @@
 				8CECBBF52742AB3F00A2802D /* GitHubDtos.swift in Sources */,
 				768A4C5528AF253C004E557E /* BottomItemView.swift in Sources */,
 				76181DD52D7CC83000D4D7CB /* AppView.swift in Sources */,
+				9A1E0C0A2E00000000000004 /* PullMenuTitle.swift in Sources */,
 				769F4E1B2765A2B900594911 /* AboutView.swift in Sources */,
 				8CECBC0927436C2200A2802D /* NSMutableAttributedStringExtensions.swift in Sources */,
 				8CECBBF42742AB3F00A2802D /* GitHubClient.swift in Sources */,
