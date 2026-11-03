@@ -338,16 +338,8 @@ extension AppDelegate {
                         
                         let buildItem = NSMenuItem(title: check.name, action: #selector(self.openLink), keyEquivalent: "")
                         buildItem.representedObject = check.detailsUrl
-                        buildItem.toolTip = check.conclusion
-                        if check.conclusion  == "SUCCESS" {
-                            buildItem.image = NSImage(named: "check-circle-fill")!.tint(color: NSColor(named: "green")!)
-                        } else if check.conclusion  == "FAILURE" {
-                            buildItem.image = NSImage(named: "x-circle-fill")!.tint(color: NSColor(named: "red")!)
-                        } else if check.conclusion  == "ACTION_REQUIRED" {
-                            buildItem.image = NSImage(named: "issue-draft")!.tint(color: NSColor(named: "yellow")!)
-                        } else {
-                            buildItem.image = NSImage(named: "question")!.tint(color: NSColor.gray)
-                        }
+                        buildItem.toolTip = check.conclusion ?? "IN_PROGRESS"
+                        buildItem.image = checkImage(for: check.conclusion)
                         checks.append(CheckState(conclusion: check.conclusion))
                         
                         issueItem.submenu?.addItem(buildItem)
@@ -372,20 +364,9 @@ extension AppDelegate {
                     
                     buildItem.representedObject = check.detailsUrl ?? URL.init(string:check.targetUrl ?? "")
                     
-                    buildItem.toolTip = check.conclusion ?? check.state ?? ""
-
                     let status = check.conclusion ?? check.state ?? ""
-                    switch status {
-                    case "SUCCESS":
-                        buildItem.image = NSImage(named: "check-circle-fill")!.tint(color: NSColor(named: "green")!)
-                    case "FAILURE":
-                        buildItem.image = NSImage(named: "x-circle-fill")!.tint(color: NSColor(named: "red")!)
-                    case "PENDING":
-                        buildItem.image = NSImage(named: "issue-draft")!.tint(color: NSColor(named: "yellow")!)
-                    default:
-                        buildItem.image = NSImage(named: "question")!.tint(color: NSColor.gray)
-
-                    }
+                    buildItem.toolTip = status.isEmpty ? "IN_PROGRESS" : status
+                    buildItem.image = checkImage(for: status)
                     checks.append(CheckState(conclusion: status))
                     issueItem.submenu?.addItem(buildItem)
                 }
@@ -393,6 +374,26 @@ extension AppDelegate {
         }
 
         return checks
+    }
+
+    /// Submenu icon for a check run conclusion or status context state. `nil` or empty means the check is still running.
+    func checkImage(for status: String?) -> NSImage {
+        switch status {
+        case "SUCCESS":
+            return NSImage(named: "check-circle-fill")!.tint(color: NSColor(named: "green")!)
+        case "FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ERROR":
+            return NSImage(named: "x-circle-fill")!.tint(color: NSColor(named: "red")!)
+        case nil, "", "PENDING":
+            return NSImage(named: "dot-fill")!.tint(color: NSColor(named: "yellow")!)
+        case "ACTION_REQUIRED", "EXPECTED":
+            return NSImage(named: "issue-draft")!.tint(color: NSColor(named: "yellow")!)
+        case "NEUTRAL", "SKIPPED", "CANCELLED", "STALE":
+            let image = NSImage(systemSymbolName: "minus.circle.fill", accessibilityDescription: nil)!
+            image.size = NSImage(named: "question")!.size
+            return image.tint(color: NSColor.gray)
+        default:
+            return NSImage(named: "question")!.tint(color: NSColor.gray)
+        }
     }
 
     func addMenuFooterItems(to menu: NSMenu) {
