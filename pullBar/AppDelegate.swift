@@ -22,7 +22,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var aboutWindow: NSWindow!
     
     var timer: Timer? = nil
-    
+
+    var isRefreshing = false
+    var lastRefreshed: Date? = nil
+    var refreshFooter: RefreshFooterView? = nil
+    var isMenuOpen = false
+    // Option alternates inserted into an open menu make AppKit indent the standard items, so they wait for it to close.
+    var pendingAlternates: [(alternate: NSMenuItem, primary: NSMenuItem)] = []
+
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         migrateCategoriesIfNeeded()
 
@@ -37,7 +44,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusButton.imagePosition = NSControl.ImagePosition.imageLeft
         
         statusBarItem.menu = menu
-        
+        menu.delegate = self
+
         timer = Timer.scheduledTimer(
             timeInterval: Double(Defaults[.refreshRate] * 60),
             target: self,
@@ -136,16 +144,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 }
 
+extension AppDelegate: NSMenuDelegate {
+    func menuWillOpen(_ menu: NSMenu) {
+        isMenuOpen = true
+        refreshFooter?.update()
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        isMenuOpen = false
+        for (alternate, primary) in pendingAlternates {
+            guard let primaryMenu = primary.menu else { continue }
+            primaryMenu.insertItem(alternate, at: primaryMenu.index(of: primary) + 1)
+        }
+        pendingAlternates = []
+    }
+}
+
 extension AppDelegate {
     @objc
     func refreshMenu() {
         NSLog("Refreshing menu")
+        guard !isRefreshing else { return }
 
         if (GhCli.token == "") {
-            self.menu.removeAllItems()
-            addMenuFooterItems()
+            let staging = NSMenu()
+            addMenuFooterItems(to: staging)
+            replaceMenuItems(with: staging)
             return
         }
+
+        isRefreshing = true
+        refreshFooter?.isRefreshing = true
 
 
         let categories = Defaults[.categories].filter {
@@ -166,9 +195,13 @@ extension AppDelegate {
         }
 
         group.notify(queue: .main) {
+            self.isRefreshing = false
+            self.lastRefreshed = Date()
+
             // An empty NSMenu will not open, so hold the previous items until
             // the new ones are ready to replace them.
-            self.menu.removeAllItems()
+            let staging = NSMenu()
+            self.pendingAlternates = []
             self.statusBarItem.button?.title = ""
 
             // Only categories that actually have pull requests are rendered.
@@ -187,11 +220,11 @@ extension AppDelegate {
                         self.addMenuItems(pull: pull, to: submenu)
                     }
                     parent.submenu = submenu
-                    self.menu.addItem(parent)
+                    staging.addItem(parent)
                 } else {
-                    self.menu.addItem(header)
+                    staging.addItem(header)
                     for pull in pulls {
-                        self.addMenuItems(pull: pull, to: self.menu)
+                        self.addMenuItems(pull: pull, to: staging)
                     }
                 }
 
@@ -200,7 +233,7 @@ extension AppDelegate {
                 let next = index + 1 < visibleCategories.count ? visibleCategories[index + 1] : nil
                 let groupedWithNext = category.asSubmenu && (next?.asSubmenu ?? false)
                 if !groupedWithNext {
-                    self.menu.addItem(.separator())
+                    staging.addItem(.separator())
                 }
             }
 
@@ -209,7 +242,19 @@ extension AppDelegate {
                 self.statusBarItem.button?.title = String(counterCount)
             }
 
-            self.addMenuFooterItems()
+            self.addMenuFooterItems(to: staging)
+            self.replaceMenuItems(with: staging)
+        }
+    }
+
+    func replaceMenuItems(with staging: NSMenu) {
+        let items = staging.items
+        staging.removeAllItems()
+        for (index, item) in items.enumerated() {
+            menu.insertItem(item, at: index)
+        }
+        while menu.numberOfItems > items.count {
+            menu.removeItem(at: items.count)
         }
     }
 
@@ -231,7 +276,11 @@ extension AppDelegate {
         copyItem.keyEquivalentModifierMask = [.option]
         copyItem.representedObject = pull.node.url
         copyItem.toolTip = pull.node.url.absoluteString
-        menu.addItem(copyItem)
+        if isMenuOpen {
+            pendingAlternates.append((alternate: copyItem, primary: issueItem))
+        } else {
+            menu.addItem(copyItem)
+        }
 
         setAvatar(pull: pull, for: [issueItem, copyItem])
     }
@@ -324,7 +373,7 @@ extension AppDelegate {
                     buildItem.representedObject = check.detailsUrl ?? URL.init(string:check.targetUrl ?? "")
                     
                     buildItem.toolTip = check.conclusion ?? check.state ?? ""
-                    
+
                     let status = check.conclusion ?? check.state ?? ""
                     switch status {
                     case "SUCCESS":
@@ -345,15 +394,23 @@ extension AppDelegate {
 
         return checks
     }
-    
-    func addMenuFooterItems() {
-        self.menu.addItem(withTitle: "Refresh", action: #selector(self.refreshMenu), keyEquivalent: "")
-        self.menu.addItem(.separator())
-        self.menu.addItem(withTitle: "Preferences...", action: #selector(self.openPrefecencesWindow), keyEquivalent: "")
+
+    func addMenuFooterItems(to menu: NSMenu) {
+        let footer = RefreshFooterView { [weak self] in
+            self?.refreshMenu()
+        }
+        footer.lastRefreshed = lastRefreshed
+        let footerItem = NSMenuItem()
+        footerItem.view = footer
+        menu.addItem(footerItem)
+        refreshFooter = footer
+
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Preferences...", action: #selector(self.openPrefecencesWindow), keyEquivalent: "")
         // Remove for app store release
-//        self.menu.addItem(withTitle: "Check for updates...", action: #selector(self.checkForUpdates), keyEquivalent: "")
-        self.menu.addItem(withTitle: "About PullBar", action: #selector(self.openAboutWindow), keyEquivalent: "")
-        self.menu.addItem(withTitle: "Quit", action: #selector(self.quit), keyEquivalent: "")
+//        menu.addItem(withTitle: "Check for updates...", action: #selector(self.checkForUpdates), keyEquivalent: "")
+        menu.addItem(withTitle: "About PullBar", action: #selector(self.openAboutWindow), keyEquivalent: "")
+        menu.addItem(withTitle: "Quit", action: #selector(self.quit), keyEquivalent: "")
     }
     
     @objc
