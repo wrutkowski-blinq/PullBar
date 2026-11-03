@@ -24,6 +24,7 @@
 		8CECBBE72742AAFB00A2802D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8CECBBE62742AAFB00A2802D /* Assets.xcassets */; };
 		8CECBBEA2742AAFB00A2802D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8CECBBE82742AAFB00A2802D /* Main.storyboard */; };
 		8CECBBF42742AB3F00A2802D /* GitHubClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CECBBF22742AB3F00A2802D /* GitHubClient.swift */; };
+		9A1E0C0A2E00000000000002 /* GhCli.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E0C0A2E00000000000001 /* GhCli.swift */; };
 		8CECBBF52742AB3F00A2802D /* GitHubDtos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CECBBF32742AB3F00A2802D /* GitHubDtos.swift */; };
 		8CECBBFB2742ABE600A2802D /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 8CECBBFA2742ABE600A2802D /* Alamofire */; };
 		8CECBBFE2742AC0800A2802D /* DefaultsExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CECBBFD2742AC0800A2802D /* DefaultsExtensions.swift */; };
@@ -49,6 +50,7 @@
 		8CECBBE92742AAFB00A2802D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		8CECBBEB2742AAFB00A2802D /* pullBar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = pullBar.entitlements; sourceTree = "<group>"; };
 		8CECBBF22742AB3F00A2802D /* GitHubClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GitHubClient.swift; sourceTree = "<group>"; };
+		9A1E0C0A2E00000000000001 /* GhCli.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GhCli.swift; sourceTree = "<group>"; };
 		8CECBBF32742AB3F00A2802D /* GitHubDtos.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GitHubDtos.swift; sourceTree = "<group>"; };
 		8CECBBFD2742AC0800A2802D /* DefaultsExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DefaultsExtensions.swift; sourceTree = "<group>"; };
 		8CECBC002742B3A000A2802D /* PreferencesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
@@ -117,6 +119,7 @@
 				8CECBBF22742AB3F00A2802D /* GitHubClient.swift */,
 				8CECBBF32742AB3F00A2802D /* GitHubDtos.swift */,
 				76F7DACF28A88CAB0086A3B0 /* GithubTokenValidator.swift */,
+				9A1E0C0A2E00000000000001 /* GhCli.swift */,
 			);
 			path = GitHub;
 			sourceTree = "<group>";
@@ -240,6 +243,7 @@
 				769F4E1B2765A2B900594911 /* AboutView.swift in Sources */,
 				8CECBC0927436C2200A2802D /* NSMutableAttributedStringExtensions.swift in Sources */,
 				8CECBBF42742AB3F00A2802D /* GitHubClient.swift in Sources */,
+				9A1E0C0A2E00000000000002 /* GhCli.swift in Sources */,
 				8C55444D274AD9E00079CA42 /* NSImageExtensions.swift in Sources */,
 				8CECBBFE2742AC0800A2802D /* DefaultsExtensions.swift in Sources */,
 				76D5F9E628D28A29009EBD80 /* Keychain.swift in Sources */,

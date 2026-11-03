@@ -38,7 +38,14 @@ There are 3 ways of installing the application:
     ```
  - [Download](https://github.com/menubar-apps/PullBar/releases) from github releases
 
-Then [generate](https://github.com/settings/tokens/new?scopes=repo) a github access token (you'll need to have a **repo** scope selected) and paste it in the application preferences:
+Then sign in with the [GitHub CLI](https://cli.github.com). PullBar reads its token with `gh auth token`, so there is no personal access token to create:
+
+```shell
+brew install gh
+gh auth login
+```
+
+For GitHub Enterprise, set the API Base URL in the application preferences and run `gh auth login --hostname <your-host>`.
 
 
 

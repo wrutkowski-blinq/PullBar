@@ -12,36 +12,44 @@ class GithubTokenValidator: ObservableObject {
     
     @Published var iconName: String!;
     @Published var iconColor: Color!;
-    
+    @Published var message = ""
+
     init() {
         setLoading()
     }
-    
+
     func setLoading() {
-        
+
         self.iconName = "clock.fill"
         self.iconColor = Color(.systemGray)
+        self.message = "Checking…"
     }
-    
-    func setInvalid() {
+
+    func setInvalid(message: String) {
         self.iconName = "exclamationmark.circle.fill"
         self.iconColor = Color(.systemRed)
+        self.message = message
     }
-    
-    func setValid() {
+
+    func setValid(login: String) {
         self.iconName = "checkmark.circle.fill"
         self.iconColor = Color(.systemGreen)
-        
+        self.message = "Signed in as \(login)"
     }
-    
+
     func validate() {
         self.setLoading()
-        
+
+        if GhCli.token.isEmpty {
+            self.setInvalid(message: "No token from gh for \(GhCli.hostname)")
+            return
+        }
+
         GitHubClient().getUser() { user in
-            if user != nil {
-                self.setValid()
+            if let user = user {
+                self.setValid(login: user.login)
             } else {
-                self.setInvalid()
+                self.setInvalid(message: "GitHub rejected the gh token")
             }
         }
     }

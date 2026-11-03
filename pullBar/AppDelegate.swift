@@ -14,8 +14,6 @@ import KeychainAccess
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
 
-    @FromKeychain(.githubToken) var githubToken
-    
     let ghClient = GitHubClient()
     var statusBarItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let menu: NSMenu = NSMenu()
@@ -143,7 +141,7 @@ extension AppDelegate {
     func refreshMenu() {
         NSLog("Refreshing menu")
 
-        if (githubToken == "") {
+        if (GhCli.token == "") {
             self.menu.removeAllItems()
             addMenuFooterItems()
             return

@@ -12,8 +12,8 @@ import KeychainAccess
 
 public class GitHubClient {
     
-    @FromKeychain(.githubToken) var githubToken
-    
+    private var githubToken: String { GhCli.token }
+
     /// Fetches open pull requests matching a category's search `filter`, wrapped in
     /// the standard `is:open is:pr ... archived:false` query.
     func getPulls(filter: String, completion:@escaping (([Edge]) -> Void)) -> Void {
@@ -42,6 +42,9 @@ public class GitHubClient {
                 case .success(let prs):
                     completion(prs.data.search.edges)
                 case .failure(let error):
+                    if response.response?.statusCode == 401 {
+                        GhCli.invalidate()
+                    }
                     sendNotification(body: error.localizedDescription)
                     completion([Edge]())
                     print(error)
@@ -182,6 +185,9 @@ public class GitHubClient {
             case .success(let repo):
                 completion(repo)
             case .failure(let error):
+                if response.response?.statusCode == 401 {
+                    GhCli.invalidate()
+                }
                 completion(nil)
                 print(error)
             }

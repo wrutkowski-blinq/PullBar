@@ -13,7 +13,6 @@ import LaunchAtLogin
 struct PreferencesView: View {
 
     @Default(.githubApiBaseUrl) var githubApiBaseUrl
-    @FromKeychain(.githubToken) var githubToken
 
     @Default(.categories) var categories
 
@@ -91,30 +90,25 @@ struct PreferencesView: View {
                         .disableAutocorrection(true)
                         .textContentType(.password)
                         .frame(width: 200)
+                        .onChange(of: githubApiBaseUrl) { _ in
+                            GhCli.invalidate()
+                        }
                 }
                 HStack(alignment: .center) {
-                    Text("Token:").frame(width: 120, alignment: .trailing)
+                    Text("GitHub CLI:").frame(width: 120, alignment: .trailing)
                     VStack(alignment: .leading) {
                         HStack() {
-                            SecureField("", text: $githubToken)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .overlay(
-                                    Image(systemName: githubTokenValidator.iconName).foregroundColor(githubTokenValidator.iconColor)
-                                        .frame(maxWidth: .infinity, alignment: .trailing)
-                                        .padding(.trailing, 8)
-                                )
-                                .frame(width: 380)
-                                .onChange(of: githubToken) { _ in
-                                    githubTokenValidator.validate()
-                                }
+                            Image(systemName: githubTokenValidator.iconName).foregroundColor(githubTokenValidator.iconColor)
+                            Text(githubTokenValidator.message)
                             Button {
+                                GhCli.invalidate()
                                 githubTokenValidator.validate()
                             } label: {
                                 Image(systemName: "repeat")
                             }
                             .help("Retry")
                         }
-                        Text("[Generate](https://github.com/settings/tokens/new?scopes=repo) a personal access token, make sure to select **repo** scope")
+                        Text("Uses the token from the `gh` CLI. Run `gh auth login --hostname \(GhCli.hostname)` in a terminal, then press Retry.")
                             .font(.footnote)
                             .padding(.leading, 8)
                             .foregroundColor(.secondary)
