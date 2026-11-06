@@ -101,10 +101,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             Defaults.reset(.legacyAdditionalQuery)
         }
+        // The menubar count moved from a single selected category onto each category, so several can show.
+        if Defaults[.categoriesSchemaVersion] < 4 {
+            Defaults[.categoriesSchemaVersion] = 4
+            let counter = Defaults[.legacyCounterSelection]
+            Defaults[.categories] = Defaults[.categories].map {
+                var category = $0
+                category.showInMenubar = category.id == counter
+                return category
+            }
+            Defaults.reset(.legacyCounterSelection)
+        }
     }
 
     /// One-time migration of the legacy per-type toggles and counter choice into
-    /// the user-managed `categories` list and `counterSelection`. Fresh installs
+    /// the user-managed `categories` list and `legacyCounterSelection`. Fresh installs
     /// (no persisted legacy settings) keep the default categories instead.
     private func migrateLegacyCategories() {
         let userDefaults = UserDefaults.standard
@@ -131,7 +142,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let seeded = [BuiltinTemplate.assigned, .created, .reviewRequested]
             .filter { enabled[$0] == true || $0 == counterTemplate }
         Defaults[.categories] = seeded.map { $0.makeSeedCategory() }
-        Defaults[.counterSelection] = counterTemplate?.seedId ?? SearchCategory.counterNone
+        Defaults[.legacyCounterSelection] = counterTemplate?.seedId ?? SearchCategory.counterNone
     }
 
     @objc
@@ -180,7 +191,6 @@ extension AppDelegate {
         let categories = Defaults[.categories].filter {
             !$0.filter.trimmingCharacters(in: .whitespaces).isEmpty
         }
-        let counter = Defaults[.counterSelection]
 
         var pullsByCategory: [String: [Edge]] = [:]
 
@@ -237,9 +247,9 @@ extension AppDelegate {
                 }
             }
 
-            let counterCount = (pullsByCategory[counter] ?? []).count
-            if counterCount > 0 {
-                self.statusBarItem.button?.title = String(counterCount)
+            let counts = categories.filter(\.showInMenubar).map { (pullsByCategory[$0.id] ?? []).count }
+            if counts.contains(where: { $0 > 0 }) {
+                self.statusBarItem.button?.title = counts.map(String.init).joined(separator: " · ")
             }
 
             self.addMenuFooterItems(to: staging)

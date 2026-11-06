@@ -21,7 +21,6 @@ struct PreferencesView: View {
 
     @Default(.refreshRate) var refreshRate
     @Default(.buildType) var builtType
-    @Default(.counterSelection) var counterSelection
 
     @State private var showGhAlert = false
 
@@ -133,7 +132,7 @@ struct PreferencesView: View {
     /// builtin templates or a blank custom category.
     private var categoriesTab: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Categories appear in the menu in this order. Drag to reorder. Tick Menubar to show a category's count next to the icon.")
+            Text("Categories appear in the menu in this order. Drag to reorder. Tick Menubar to show a category's count next to the icon. Several counts show in this order, separated by a dot.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
@@ -169,17 +168,11 @@ struct PreferencesView: View {
                         .pickerStyle(MenuPickerStyle())
                         .frame(width: 120)
                         .help("Where this category's pull requests appear in the menu")
-                        Toggle("", isOn: Binding(
-                            get: { counterSelection == category.id },
-                            set: { counterSelection = $0 ? category.id : SearchCategory.counterNone }
-                        ))
+                        Toggle("", isOn: $category.showInMenubar)
                         .labelsHidden()
                         .frame(width: 60)
                         .help("Show this category's count next to the menubar icon")
                         Button {
-                            if counterSelection == category.id {
-                                counterSelection = SearchCategory.counterNone
-                            }
                             categories.removeAll { $0.id == category.id }
                         } label: {
                             Image(systemName: "trash")

@@ -12,12 +12,14 @@ extension Defaults.Keys {
     static let githubApiBaseUrl = Key<String>("githubApiBaseUrl", default: "https://api.github.com")
 
     // Legacy keys, kept only so preferences from older versions can be migrated
-    // into `categories` / `counterSelection`.
+    // into `categories`.
     static let legacyAdditionalQuery = Key<String>("githubAdditionalQuery", default: "")
     static let showAssigned = Key<Bool>("showAssigned", default: false)
     static let showCreated = Key<Bool>("showCreated", default: false)
     static let showRequested = Key<Bool>("showRequested", default: true)
     static let legacyCounterType = Key<String>("counterType", default: "reviewRequested")
+    // The single category whose count was shown next to the menubar icon, or `counterNone`.
+    static let legacyCounterSelection = Key<String>("counterSelection", default: BuiltinTemplate.reviewRequested.seedId)
 
     // Ordered list of categories the user has added. Order determines the order
     // sections appear in the menubar menu.
@@ -30,9 +32,6 @@ extension Defaults.Keys {
 
     static let refreshRate = Key<Int>("refreshRate", default: 5)
     static let buildType = Key<BuildType>("buildType", default: .none)
-    // Which count is shown next to the menubar icon: the id of a category, or
-    // `counterNone`.
-    static let counterSelection = Key<String>("counterSelection", default: BuiltinTemplate.reviewRequested.seedId)
 }
 
 extension KeychainKeys {
@@ -50,23 +49,26 @@ struct SearchCategory: Codable, Defaults.Serializable, Identifiable, Hashable {
     /// ("Name (12) ▸") whose submenu holds the pull requests, instead of listing
     /// them inline.
     var asSubmenu: Bool
+    var showInMenubar: Bool
 
-    init(id: String, name: String, filter: String, asSubmenu: Bool = false) {
+    init(id: String, name: String, filter: String, asSubmenu: Bool = false, showInMenubar: Bool = false) {
         self.id = id
         self.name = name
         self.filter = filter
         self.asSubmenu = asSubmenu
+        self.showInMenubar = showInMenubar
     }
 
-    // Custom decoding so categories stored before `asSubmenu` existed still
-    // decode (missing key defaults to false) rather than failing and wiping the
-    // user's saved list.
+    // Custom decoding so categories stored before `asSubmenu` and `showInMenubar`
+    // existed still decode (missing keys default to false) rather than failing and
+    // wiping the user's saved list.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
         filter = try container.decode(String.self, forKey: .filter)
         asSubmenu = try container.decodeIfPresent(Bool.self, forKey: .asSubmenu) ?? false
+        showInMenubar = try container.decodeIfPresent(Bool.self, forKey: .showInMenubar) ?? false
     }
 
     var displayName: String {
@@ -82,9 +84,11 @@ struct SearchCategory: Codable, Defaults.Serializable, Identifiable, Hashable {
 
     /// The list a fresh install starts with, matching the previous default of
     /// showing only review requests.
-    static let defaultCategories: [SearchCategory] = [
-        BuiltinTemplate.reviewRequested.makeSeedCategory(),
-    ]
+    static let defaultCategories: [SearchCategory] = {
+        var reviewRequested = BuiltinTemplate.reviewRequested.makeSeedCategory()
+        reviewRequested.showInMenubar = true
+        return [reviewRequested]
+    }()
 }
 
 /// Predefined starting points offered by the "+" menu on the Categories tab.
